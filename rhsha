@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>체지방 다이어트 도우미</title>
+    <link 
+        rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+        integrity="sha384-GnfjN4qcuJF0sMnBqLfFnwFJjCq3vaD7tg4g4J3G3ujqdGbcb2PGGRuG/z5dFTSK" 
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="toast-container"></div>
+
+    <!-- 첫 페이지 (initial-page) -->
+    <div class="container page" id="initial-page">
+        <h1>체지방 다이어트 도우미</h1>
+        <h5>사용자 식별 코드 & 정보 설정</h5>
+
+        <!-- 사용자 식별 코드 입력란을 가장 상단에 명시적으로 추가 -->
+        <div class="mb-4">
+            <h6>사용자 식별 코드 (6자리 숫자)</h6>
+            <input type="text" class="form-control" id="userCodeInit" placeholder="예: 123456" style="max-width:200px;">
+        </div>
+
+        <div class="mb-4">
+            <h6>체지방 목표 설정</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">현재 체지방량 (kg)</label>
+                    <input type="number" class="form-control" id="currentFatInit" placeholder="예: 20.5">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">목표 체지방량 (kg)</label>
+                    <input type="number" class="form-control" id="goalFatInit" placeholder="예: 15.0">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h6>개인 정보</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">나이</label>
+                    <input type="number" class="form-control" id="ageInit" placeholder="예: 30">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">성별</label>
+                    <select class="form-select" id="genderInit">
+                        <option value="" selected>선택</option>
+                        <option value="M">남성</option>
+                        <option value="F">여성</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">키 (cm)</label>
+                    <input type="number" class="form-control" id="heightInit" placeholder="예:170">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">초기 체중 (kg)</label>
+                    <input type="number" class="form-control" id="initialWeightInit" placeholder="예:70">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <button class="btn btn-primary w-100" id="saveUserInfoBtn">저장하고 메인페이지로 이동</button>
+        </div>
+    </div>
+
+    <!-- 메인 페이지 (main-page) -->
+    <div class="container page" id="main-page" style="display:none;">
+        <h1>메인 페이지</h1>
+        <h5>일일 기록</h5>
+
+        <div class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="recordDate" class="form-label">기록 날짜</label>
+                    <input type="date" class="form-control" id="recordDate">
+                </div>
+                <div class="col-md-3">
+                    <label for="dailyWeight" class="form-label">금일 체중 (kg)</label>
+                    <input type="number" class="form-control" id="dailyWeight" placeholder="예: 69.5">
+                </div>
+                <div class="col-md-3">
+                    <label for="dailyIntake" class="form-label">일일 섭취 (kcal)</label>
+                    <input type="number" class="form-control" id="dailyIntake" placeholder="예: 2000">
+                </div>
+                <div class="col-md-3">
+                    <label for="dailyExercise" class="form-label">운동 소비 (kcal)</label>
+                    <input type="number" class="form-control" id="dailyExercise" placeholder="예: 500">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4 d-flex justify-content-between">
+            <button class="btn btn-secondary" id="goToInitialPageBtn">목표/개인정보 수정</button>
+            <button class="btn btn-success" id="saveDailyRecordBtn">기록 완료하고 결과 보기</button>
+        </div>
+    </div>
+
+    <!-- 결과 페이지 (result-page) -->
+    <div class="container page" id="result-page" style="display:none;">
+        <h1>결과 페이지</h1>
+
+        <!-- 일일 결과 -->
+        <div class="result-box" id="dailyResult" style="display:none;">
+            <p><strong>금일 예상 체지방 감소량:</strong> <span id="dailyFatLoss">-</span> kg</p>
+            <div class="progress-container">
+                <div class="progress-title">목표 체지방량 달성도 (누적)</div>
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;" 
+                        aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 히스토리 -->
+        <div class="result-box" id="historySection" style="display:none;">
+            <h5>기록 히스토리</h5>
+            <table class="table table-bordered table-striped history-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>날짜</th>
+                        <th>체중 (kg)</th>
+                        <th>섭취 (kcal)</th>
+                        <th>운동 (kcal)</th>
+                        <th>일일 체지방 감소량 (kg)</th>
+                        <th>일일 목표달성도 (%)</th>
+                        <th>누적 체지방 감소량 (kg)</th>
+                        <th>누적 목표달성도 (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- 그래프 섹션 -->
+        <div class="chart-section">
+            <h3 class="chart-title">누적 체지방 감소량 & 목표달성도 추이</h3>
+            <div class="row-charts">
+                <div class="chart-box">
+                    <div class="chart-container">
+                        <h5 class="text-center" style="color:#ff6f00;">누적 체지방 감소량 (kg)</h5>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-container">
+                        <h5 class="text-center" style="color:#ff6f00;">누적 목표 체지방량 달성률 (%)</h5>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4 d-flex justify-content-end">
+            <button class="btn btn-primary" id="backToMainBtn">메인 페이지로 돌아가기</button>
+        </div>
+    </div>
+
+
+    <script 
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-0Mv0QFqdz1Rljb5A1FSi7HC+5HLVaK2OwSeLwUkXzf+jqOQmyPbH3p8XnZMxFWO0" 
+        crossorigin="anonymous">
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
